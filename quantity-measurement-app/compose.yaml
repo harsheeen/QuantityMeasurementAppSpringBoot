@@ -1,13 +1,12 @@
 services:
 
-  mysql:
+  quantitymeasurementdb:
     image: mysql:8.0
-
     container_name: quantitymeasurementdb_v2
 
     environment:
       MYSQL_ROOT_PASSWORD: root123
-      MYSQL_DATABASE: qm_db
+      MYSQL_DATABASE: quantitymeasurement
       MYSQL_USER: quantityadmin
       MYSQL_PASSWORD: quantity@123
 
@@ -17,19 +16,35 @@ services:
     volumes:
       - quantitymeasurement-dbdata:/var/lib/mysql
 
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
     networks:
       - quantitymeasurement-net
 
   backend:
-    image: 668628646562.dkr.ecr.eu-north-1.amazonaws.com/qm-app
+    image: 668628646562.dkr.ecr.eu-north-1.amazonaws.com/qm-app:latest
 
     container_name: qm-app-backend
 
     ports:
       - "8080:8080"
 
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://quantitymeasurementdb:3306/quantitymeasurement
+      SPRING_DATASOURCE_USERNAME: quantityadmin
+      SPRING_DATASOURCE_PASSWORD: quantity@123
+      SERVER_PORT: 8080
+
     depends_on:
-      - mysql
+      quantitymeasurementdb:
+        condition: service_healthy
+
+    restart: unless-stopped
 
     networks:
       - quantitymeasurement-net
