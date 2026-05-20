@@ -21,7 +21,7 @@ services:
       - quantitymeasurement-net
 
   backend:
-    image: 592992781575.dkr.ecr.ap-south-1.amazonaws.com/quantitymeasurement-backend:v1
+    image: 668628646562.dkr.ecr.eu-north-1.amazonaws.com/qm-app
 
     container_name: qm-app-backend
 
