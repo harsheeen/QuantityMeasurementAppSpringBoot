@@ -2,9 +2,9 @@ pipeline {
     agent any
 
     environment {
-        AWS_ACCOUNT_ID = '592992781575'
-        AWS_REGION = 'ap-south-1'
-        IMAGE_NAME = 'quantitymeasurement-backend'
+        AWS_ACCOUNT_ID = '668628646562'
+        AWS_REGION = 'eu-north-1'
+        IMAGE_NAME = 'qm-app'
         ECR_URI = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${IMAGE_NAME}"
     }
 
@@ -12,15 +12,15 @@ pipeline {
 
         stage('Checkout Code') {
             steps {
-                git branch: 'docker-cicd',
-                url: 'https://github.com/Utkarsh-37/QuantityMeasurementAppSpringBoot.git'
+                git branch: 'main',
+                url: 'https://github.com/harsheeen/QuantityMeasurementAppSpringBoot.git'
             }
         }
 
         stage('Build Docker Image') {
             steps {
                 dir('quantity-measurement-app') {
-                    sh 'docker build -t quantitymeasurement-backend:latest .'
+                    sh 'docker build -t qm-app:latest .'
                 }
             }
         }
@@ -33,7 +33,7 @@ pipeline {
                 ]]) {
 
                     sh '''
-                    aws ecr get-login-password --region ap-south-1 | \
+                    aws ecr get-login-password --region ${AWS_REGION} | \
                     docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
                     '''
                 }
@@ -42,7 +42,7 @@ pipeline {
 
         stage('Tag Image') {
             steps {
-                sh 'docker tag quantitymeasurement-backend:latest ${ECR_URI}:latest'
+                sh 'docker tag qm-app:latest ${ECR_URI}:latest'
             }
         }
 
@@ -55,9 +55,9 @@ pipeline {
         stage('Deploy to Application EC2') {
             steps {
                 sh '''
-                ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/.ssh/mykey.pem ubuntu@172.31.36.244 << EOF
+                ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/.ssh/mykey.pem ubuntu@172.31.41.179 << EOF
 
-                aws ecr get-login-password --region ap-south-1 | \
+                aws ecr get-login-password --region ${AWS_REGION} | \
                 docker login --username AWS --password-stdin ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
 
                 cd ~/QuantityMeasurementAppSpringBoot/quantity-measurement-app
